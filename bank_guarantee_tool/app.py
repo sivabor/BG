@@ -53,6 +53,24 @@ def process_workbook(file_bytes: bytes) -> dict[str, pd.DataFrame | str]:
     }
 
 
+def process_workbook_with_progress(file_bytes: bytes, source_label: str) -> dict[str, pd.DataFrame | str]:
+    """Run workbook processing with a visible progress indicator for non-technical users."""
+    progress = st.sidebar.progress(0, text=f"Загружаю {source_label}...")
+    try:
+        progress.progress(20, text="Читаю Excel-листы...")
+        progress.progress(45, text="Нормализую колонки, даты и суммы...")
+        data = process_workbook(file_bytes)
+        progress.progress(75, text="Считаю лимиты, справочники и проверки...")
+        progress.progress(100, text="Готово: данные обработаны")
+        st.sidebar.success("Excel-файл загружен и обработан")
+        return data
+    except Exception as exc:
+        progress.empty()
+        st.sidebar.error("Не удалось обработать Excel-файл")
+        st.sidebar.exception(exc)
+        return empty_state()
+
+
 def empty_state() -> dict[str, pd.DataFrame | str]:
     return {
         "guarantee_sheet": "",
@@ -77,9 +95,10 @@ def sidebar_data_loader() -> dict[str, pd.DataFrame | str]:
     )
 
     if uploaded_file is not None:
-        return process_workbook(uploaded_file.getvalue())
+        st.sidebar.info(f"Файл выбран: {uploaded_file.name}")
+        return process_workbook_with_progress(uploaded_file.getvalue(), uploaded_file.name)
     if use_demo:
-        return process_workbook(build_demo_workbook())
+        return process_workbook_with_progress(build_demo_workbook(), "демо-шаблон")
     return empty_state()
 
 
