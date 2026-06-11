@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BG & Limits — HTML проверка MVP</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07111f;
+      --panel: #0d1b2d;
+      --panel-2: #10243a;
+      --line: rgba(148, 163, 184, .22);
+      --text: #e5eefb;
+      --muted: #94a3b8;
+      --blue: #0ea5e9;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background: radial-gradient(circle at top right, rgba(14,165,233,.25), transparent 32%), var(--bg);
+      color: var(--text);
+    }
+    header { padding: 28px 32px 12px; border-bottom: 1px solid var(--line); }
+    h1 { margin: 0; font-size: 30px; letter-spacing: .03em; }
+    h2 { margin: 0 0 14px; font-size: 18px; }
+    .accent { color: var(--blue); }
+    .sub { color: var(--muted); margin-top: 8px; }
+    main { padding: 24px 32px 40px; }
+    .toolbar, .grid, .charts { display: grid; gap: 16px; }
+    .toolbar { grid-template-columns: 1.2fr .8fr; align-items: stretch; margin-bottom: 18px; }
+    .grid { grid-template-columns: repeat(5, minmax(150px, 1fr)); margin-bottom: 18px; }
+    .charts { grid-template-columns: 1fr 1fr; margin-bottom: 18px; }
+    .card, .panel {
+      background: linear-gradient(180deg, rgba(16,36,58,.96), rgba(9,20,34,.96));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 16px 50px rgba(0,0,0,.25);
+    }
+    .card { padding: 18px; min-height: 112px; }
+    .panel { padding: 18px; overflow: hidden; }
+    .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .value { font-size: 24px; font-weight: 800; margin-top: 10px; }
+    .hint { color: var(--muted); font-size: 13px; margin-top: 7px; }
+    button, .file-label {
+      appearance: none;
+      border: 1px solid rgba(14,165,233,.45);
+      background: rgba(14,165,233,.13);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-block;
+      margin: 4px 6px 4px 0;
+    }
+    button:hover, .file-label:hover { background: rgba(14,165,233,.24); }
+    input[type="file"] { display: none; }
+    textarea {
+      width: 100%; min-height: 120px; resize: vertical;
+      background: rgba(2,6,23,.55); color: var(--text);
+      border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+      font-family: Consolas, monospace;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 9px; border-bottom: 1px solid rgba(148,163,184,.14); text-align: left; }
+    th { color: #bfdbfe; font-weight: 800; background: rgba(14,165,233,.08); position: sticky; top: 0; }
+    tr:hover td { background: rgba(14,165,233,.05); }
+    .table-wrap { max-height: 360px; overflow: auto; border-radius: 12px; border: 1px solid rgba(148,163,184,.12); }
+    .flag { border-radius: 999px; padding: 4px 8px; font-size: 12px; font-weight: 800; display: inline-block; }
+    .ok { background: rgba(34,197,94,.16); color: #86efac; }
+    .warn { background: rgba(245,158,11,.18); color: #fcd34d; }
+    .risk { background: rgba(239,68,68,.18); color: #fca5a5; }
+    .bar { height: 12px; background: rgba(148,163,184,.18); border-radius: 999px; overflow: hidden; min-width: 130px; }
+    .fill { height: 100%; background: linear-gradient(90deg, var(--blue), #38bdf8); border-radius: 999px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .notice { color: var(--muted); font-size: 14px; line-height: 1.55; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, 1fr); } .toolbar, .charts, .two { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>BG & LIMITS — <span class="accent">HTML проверка MVP</span></h1>
+    <div class="sub">Откройте этот файл двойным кликом: он работает в браузере без Python, Streamlit и установки библиотек.</div>
+  </header>
+
+  <main>
+    <section class="toolbar">
+      <div class="panel">
+        <h2>Как проверить</h2>
+        <div class="notice">
+          1) Нажмите «Загрузить демо-данные» — вы сразу увидите расчёт лимитов и реестр БГ.<br>
+          2) Или вставьте/загрузите CSV с колонками: <b>Номер БГ, Банк, Поставщик, Юрлицо, Сумма БГ, Дата окончания, Статус, Общий лимит, Резерв</b>.<br>
+          3) Эта HTML-страница нужна для быстрой проверки концепции. Полная версия с Excel-импортом запускается через Streamlit/BAT-файл.
+        </div>
+        <button onclick="loadDemo()">Загрузить демо-данные</button>
+        <button onclick="renderFromTextarea()">Пересчитать из поля CSV</button>
+        <button onclick="downloadCsv()">Скачать текущий CSV</button>
+        <label class="file-label" for="csvFile">Загрузить CSV</label>
+        <input id="csvFile" type="file" accept=".csv,text/csv" onchange="loadCsvFile(event)">
+      </div>
+      <div class="panel">
+        <h2>CSV для проверки</h2>
+        <textarea id="csvInput" spellcheck="false"></textarea>
+      </div>
+    </section>
+
+    <section class="grid" id="metrics"></section>
+
+    <section class="charts">
+      <div class="panel">
+        <h2>Лимиты банков</h2>
+        <div class="table-wrap"><table id="limitsTable"></table></div>
+      </div>
+      <div class="panel">
+        <h2>Ближайшие окончания БГ</h2>
+        <div class="table-wrap"><table id="expiryTable"></table></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Реестр банковских гарантий</h2>
+      <div class="table-wrap"><table id="guaranteesTable"></table></div>
+    </section>
+  </main>
+
+<script>
+const demoCsv = `Номер БГ,Банк,Поставщик,Юрлицо,Сумма БГ,Дата окончания,Статус,Общий лимит,Резерв
+BG-2026-001,Сбербанк,МеталлИнвест,ООО Технострой,125000000,2026-07-05,active,250000000,10000000
+BG-2026-002,ВТБ,СтройКомплект,ООО Технострой,85000000,2026-08-15,active,100000000,5000000
+BG-2026-003,Газпромбанк,Логистика Плюс,АО Промснаб,210000000,2026-10-10,active,260000000,20000000
+BG-2025-004,Альфа-Банк,ЭнергоСервис,АО Промснаб,45000000,2026-06-20,active,50000000,0
+BG-2026-005,Сбербанк,МеталлИнвест,ООО Технострой,60000000,2026-09-12,active,250000000,10000000`;
+
+function money(value) {
+  return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(value || 0) + ' ₽';
+}
+function percent(value) {
+  if (!isFinite(value)) return '—';
+  return new Intl.NumberFormat('ru-RU', { style: 'percent', maximumFractionDigits: 1 }).format(value);
+}
+function parseMoney(value) {
+  if (value === undefined || value === null) return 0;
+  const normalized = String(value).replace(/\s/g, '').replace(/₽|руб\.?|RUB/gi, '').replace(',', '.').replace(/[^0-9.-]/g, '');
+  return Number(normalized) || 0;
+}
+function parseCsv(text) {
+  const rows = text.trim().split(/\r?\n/).filter(Boolean).map(line => line.split(',').map(cell => cell.trim()));
+  if (rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).map(row => Object.fromEntries(headers.map((h, i) => [h, row[i] ?? ''])));
+}
+function isActive(row) {
+  const status = String(row['Статус'] || '').toLowerCase();
+  const end = new Date(row['Дата окончания']);
+  return ['active', 'действует', ''].includes(status) && (!isNaN(end) ? end >= new Date(new Date().toDateString()) : true);
+}
+function buildLimits(rows) {
+  const map = new Map();
+  rows.forEach(row => {
+    const key = `${row['Банк']}|||${row['Юрлицо']}`;
+    if (!map.has(key)) {
+      map.set(key, { bank: row['Банк'], entity: row['Юрлицо'], total: parseMoney(row['Общий лимит']), reserved: parseMoney(row['Резерв']), used: 0 });
+    }
+    const item = map.get(key);
+    item.total = Math.max(item.total, parseMoney(row['Общий лимит']));
+    item.reserved = Math.max(item.reserved, parseMoney(row['Резерв']));
+    if (isActive(row)) item.used += parseMoney(row['Сумма БГ']);
+  });
+  return [...map.values()].map(item => {
+    item.available = item.total - item.used - item.reserved;
+    item.usage = item.total ? item.used / item.total : NaN;
+    item.flag = item.total === 0 ? 'LIMIT_NOT_LOADED' : item.available < 0 ? 'LIMIT_OVERUSED' : item.available / item.total < .1 ? 'LOW_AVAILABLE_LIMIT' : 'OK';
+    return item;
+  });
+}
+function table(elementId, headers, rows, mapper) {
+  const html = `<thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${mapper(row)}</tr>`).join('')}</tbody>`;
+  document.getElementById(elementId).innerHTML = html;
+}
+function render(rows) {
+  const activeRows = rows.filter(isActive);
+  const limits = buildLimits(rows);
+  const totalLimit = limits.reduce((s, x) => s + x.total, 0);
+  const usedLimit = limits.reduce((s, x) => s + x.used, 0);
+  const availableLimit = limits.reduce((s, x) => s + x.available, 0);
+  const risky = limits.filter(x => x.flag !== 'OK').length;
+  const today = new Date(new Date().toDateString());
+  const soon = activeRows.filter(row => {
+    const days = (new Date(row['Дата окончания']) - today) / 86400000;
+    return days >= 0 && days <= 30;
+  });
+
+  document.getElementById('metrics').innerHTML = [
+    ['Общий лимит', money(totalLimit), 'Сумма лимитов из CSV'],
+    ['Использовано', money(usedLimit), percent(totalLimit ? usedLimit / totalLimit : NaN)],
+    ['Свободно', money(availableLimit), 'После резерва'],
+    ['Действующие БГ', activeRows.length + ' шт.', money(activeRows.reduce((s, r) => s + parseMoney(r['Сумма БГ']), 0))],
+    ['Истекают ≤30 дней', soon.length + ' шт.', `Проблемных лимитов: ${risky}`],
+  ].map(([label, value, hint]) => `<div class="card"><div class="label">${label}</div><div class="value">${value}</div><div class="hint">${hint}</div></div>`).join('');
+
+  table('limitsTable', ['Банк', 'Юрлицо', 'Лимит', 'Использовано', 'Свободно', '%', 'Флаг'], limits, row => {
+    const klass = row.flag === 'OK' ? 'ok' : row.flag === 'LOW_AVAILABLE_LIMIT' ? 'warn' : 'risk';
+    return `<td>${row.bank}</td><td>${row.entity}</td><td>${money(row.total)}</td><td>${money(row.used)}<div class="bar"><div class="fill" style="width:${Math.min(100, (row.usage || 0) * 100)}%"></div></div></td><td>${money(row.available)}</td><td>${percent(row.usage)}</td><td><span class="flag ${klass}">${row.flag}</span></td>`;
+  });
+
+  const expiryRows = activeRows.map(row => ({ ...row, days: Math.ceil((new Date(row['Дата окончания']) - today) / 86400000) })).sort((a, b) => a.days - b.days).slice(0, 10);
+  table('expiryTable', ['БГ', 'Банк', 'Поставщик', 'Дата окончания', 'Дней'], expiryRows, row => `<td>${row['Номер БГ']}</td><td>${row['Банк']}</td><td>${row['Поставщик']}</td><td>${row['Дата окончания']}</td><td>${row.days}</td>`);
+
+  table('guaranteesTable', ['Номер БГ', 'Банк', 'Поставщик', 'Юрлицо', 'Сумма', 'Дата окончания', 'Статус'], rows, row => `<td>${row['Номер БГ']}</td><td>${row['Банк']}</td><td>${row['Поставщик']}</td><td>${row['Юрлицо']}</td><td>${money(parseMoney(row['Сумма БГ']))}</td><td>${row['Дата окончания']}</td><td>${row['Статус']}</td>`);
+}
+function loadDemo() {
+  document.getElementById('csvInput').value = demoCsv;
+  render(parseCsv(demoCsv));
+}
+function renderFromTextarea() {
+  render(parseCsv(document.getElementById('csvInput').value));
+}
+function loadCsvFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { document.getElementById('csvInput').value = reader.result; renderFromTextarea(); };
+  reader.readAsText(file, 'utf-8');
+}
+function downloadCsv() {
+  const blob = new Blob([document.getElementById('csvInput').value || demoCsv], { type: 'text/csv;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'bg_limits_check.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+loadDemo();
+</script>
+</body>
+</html>
