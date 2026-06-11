@@ -8,3 +8,4 @@ bank_guarantee_tool/data/raw/*
 bank_guarantee_tool/data/processed/*
 !bank_guarantee_tool/data/raw/.gitkeep
 !bank_guarantee_tool/data/processed/.gitkeep
+.windows_runtime/
